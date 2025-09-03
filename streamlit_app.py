@@ -78,20 +78,15 @@ class GigaChat:
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
 
-def get_provider(name: str, model: str|None=None):
-    if name=="OpenAI":
-        base = st.sidebar.text_input("OPENAI_API_BASE (опц.)", value=st.secrets.get("OPENAI_API_BASE","https://api.openai.com/v1"))
-        key  = st.sidebar.text_input("OPENAI_API_KEY (если не в Secrets)", type="password", value="")
-        return OpenAICompat(model=model, base=base, key=key or None)
-    else:
-        return GigaChat(model=model)
+def get_provider(name, model=None):
+    return GigaChat(model=model)
 
 # --------------- Sidebar: provider & params --------------
 st.sidebar.header("Провайдер и параметры")
-provider_name = st.sidebar.selectbox("Провайдер", ["OpenAI","GigaChat"], index=0)
-model = st.sidebar.text_input("Модель", value= "gpt-4o-mini" if provider_name=="OpenAI" else "GigaChat-Pro")
+st.sidebar.text_input("Провайдер", value="GigaChat", disabled=True)
+model = st.sidebar.text_input("Модель", value="GigaChat-Pro", disabled=True)
 temperature = st.sidebar.slider("Температура", 0.0, 1.2, 0.0, 0.1)
-p = get_provider(provider_name, model=model)
+p = GigaChat(model=model)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("JSON Schema (опционально)")
@@ -192,7 +187,7 @@ with tab_run:
             # push to history
             add_history({
                 "ts": now_iso(),
-                "provider": provider_name,
+                "provider": 'GigaChat',
                 "model": model,
                 "temperature": temperature,
                 "template": prompt_file,
