@@ -55,3 +55,24 @@ python scripts/run.py chat --prompt-file prompts/patterns/01_zero_shot.md --var 
 - **CLI‑валидация JSON:** `python scripts/run.py chat --prompt-file ... --schema banking/schemas/complaint_schema.json`
 
 Эти материалы соответствуют описанию в портфолио: техники (System/Role/Context, Few‑shot, CoT, ReAct), настройки вывода, чек‑листы и шаблоны под банковский домен.
+
+## Развёртывание на Streamlit Cloud
+
+1. Загрузите этот репозиторий на GitHub.
+2. Зайдите в [streamlit.io](https://streamlit.io/cloud) → **New app** → подключите ваш репозиторий.  
+   В качестве entry‑file укажите `streamlit_app.py`.
+3. В разделе **Settings → Secrets** вставьте секреты, например:
+   ```toml
+   OPENAI_API_KEY = "sk-..."
+   OPENAI_API_BASE = "https://api.openai.com/v1"
+   OPENAI_MODEL = "gpt-4o-mini"
+   # или GigaChat:
+   GIGACHAT_AUTH_KEY = "base64(client_id:client_secret)"
+   GIGACHAT_SCOPE = "GIGACHAT_API_PERS"
+   GIGACHAT_MODEL = "GigaChat-Pro"
+   ```
+4. Нажмите **Deploy**. Приложение позволит:
+   - выбрать шаблон промпта из `prompts/**`;
+   - подставить переменные;
+   - выполнить запрос через выбранного провайдера;
+   - при желании провалидировать ответ по JSON‑схеме из `banking/schemas/*.json` или загруженной.
