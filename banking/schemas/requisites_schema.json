@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "account": {
+      "type": "string"
+    },
+    "bik": {
+      "type": "string"
+    },
+    "inn": {
+      "type": "string"
+    },
+    "kpp": {
+      "type": "string"
+    },
+    "recipient": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "account",
+    "recipient"
+  ],
+  "additionalProperties": false
+}
