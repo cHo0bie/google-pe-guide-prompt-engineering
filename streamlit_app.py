@@ -45,27 +45,38 @@ class OpenAICompat:
         headers = {"Authorization": f"Bearer {self.key}", "Content-Type":"application/json"}
         data = {"model": self.model, "messages":[{"role":"user","content":prompt}], "temperature": temperature}
         r = requests.post(url, headers=headers, json=data, timeout=120)
-        r.raise_for_status()
+        import textwrap as _tw
+        (
+            r.raise_for_status()
+        ) if r.status_code < 400 else (_ := st.error("OAuth error: " + _tw.shorten(r.text, width=240, placeholder="...")) or r.raise_for_status())
         return r.json()["choices"][0]["message"]["content"]
 
 class GigaChat:
     def __init__(self, model: str|None=None):
         self.model = model or st.secrets.get("GIGACHAT_MODEL","GigaChat-Pro")
         self.scope = os.environ.get("GIGACHAT_SCOPE") or st.secrets.get("GIGACHAT_SCOPE","GIGACHAT_API_PERS")
-        self.auth_key = os.environ.get("GIGACHAT_AUTH_KEY") or st.secrets.get("GIGACHAT_AUTH_KEY")
+        self.auth_key = (os.environ.get("GIGACHAT_AUTH_KEY") or st.secrets.get("GIGACHAT_AUTH_KEY") 
+                         or os.environ.get("GIGACHAT_AUTH") or st.secrets.get("GIGACHAT_AUTH"))
         verify_raw = (os.environ.get("GIGACHAT_VERIFY") or str(st.secrets.get("GIGACHAT_VERIFY","true"))).strip().lower()
         self.verify = False if verify_raw in ("0","false","no","off") else True
         self._token = None
         if not self.auth_key:
             st.warning("GIGACHAT_AUTH_KEY не задан (Secrets). Запросы не будут выполняться.")
     def _token_headers(self):
-        return {"Authorization": f"Basic {self.auth_key}","Content-Type":"application/x-www-form-urlencoded"}
+        import uuid
+        return {"Authorization": f"Basic {self.auth_key}",
+                "Content-Type":"application/x-www-form-urlencoded",
+                "Accept":"application/json",
+                "RqUID": str(uuid.uuid4())}
     def _get_token(self)->str:
         if self._token: return self._token
         url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
         data = {"scope": self.scope}
         r = requests.post(url, headers=self._token_headers(), data=data, timeout=60, verify=self.verify)
-        r.raise_for_status()
+        import textwrap as _tw
+        (
+            r.raise_for_status()
+        ) if r.status_code < 400 else (_ := st.error("OAuth error: " + _tw.shorten(r.text, width=240, placeholder="...")) or r.raise_for_status())
         self._token = r.json()["access_token"]
         return self._token
     def chat(self, prompt: str, temperature: float=0.0) -> str:
@@ -77,7 +88,10 @@ class GigaChat:
         if r.status_code==401:
             self._token=None
             return self.chat(prompt, temperature=temperature)
-        r.raise_for_status()
+        import textwrap as _tw
+        (
+            r.raise_for_status()
+        ) if r.status_code < 400 else (_ := st.error("OAuth error: " + _tw.shorten(r.text, width=240, placeholder="...")) or r.raise_for_status())
         return r.json()["choices"][0]["message"]["content"]
 
 def get_provider(name, model=None):
