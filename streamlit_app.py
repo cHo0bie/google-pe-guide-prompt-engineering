@@ -53,6 +53,8 @@ class GigaChat:
         self.model = model or st.secrets.get("GIGACHAT_MODEL","GigaChat-Pro")
         self.scope = os.environ.get("GIGACHAT_SCOPE") or st.secrets.get("GIGACHAT_SCOPE","GIGACHAT_API_PERS")
         self.auth_key = os.environ.get("GIGACHAT_AUTH_KEY") or st.secrets.get("GIGACHAT_AUTH_KEY")
+        verify_raw = (os.environ.get("GIGACHAT_VERIFY") or str(st.secrets.get("GIGACHAT_VERIFY","true"))).strip().lower()
+        self.verify = False if verify_raw in ("0","false","no","off") else True
         self._token = None
         if not self.auth_key:
             st.warning("GIGACHAT_AUTH_KEY не задан (Secrets). Запросы не будут выполняться.")
@@ -62,7 +64,7 @@ class GigaChat:
         if self._token: return self._token
         url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
         data = {"scope": self.scope}
-        r = requests.post(url, headers=self._token_headers(), data=data, timeout=60, verify=True)
+        r = requests.post(url, headers=self._token_headers(), data=data, timeout=60, verify=self.verify)
         r.raise_for_status()
         self._token = r.json()["access_token"]
         return self._token
@@ -71,7 +73,7 @@ class GigaChat:
         url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
         headers = {"Authorization": f"Bearer {token}","Content-Type":"application/json"}
         payload = {"model": self.model, "messages":[{"role":"user","content":prompt}],"temperature":temperature}
-        r = requests.post(url, headers=headers, json=payload, timeout=120, verify=True)
+        r = requests.post(url, headers=headers, json=payload, timeout=120, verify=self.verify)
         if r.status_code==401:
             self._token=None
             return self.chat(prompt, temperature=temperature)
